@@ -43,12 +43,12 @@ static const float duration = 0.3;
 - (void)setup
 {
     self.imageView = [[GPUImageView alloc] init];
-    //self.imageView.alpha = 0;
+    self.imageView.alpha = 0;
     self.imageView.opaque = NO;
     
-//    self.blend = [[GPUImageDissolveBlendFilter alloc] init];
-//    self.blend.mix = 0;
-//    [self.blend addTarget:self.imageView];
+    self.blend = [[GPUImageDissolveBlendFilter alloc] init];
+    self.blend.mix = 0;
+    [self.blend addTarget:self.imageView];
     
     
     self.blurFilter = [[GPUImageiOSBlurFilter alloc] init];
@@ -56,12 +56,8 @@ static const float duration = 0.3;
     self.blurFilter.saturation = 1.2;
     self.blurFilter.rangeReductionFactor = 0;
     
-    //self.targetPixellateFilter = [[GPUImageiOSBlurFilter alloc] init];
-    //self.targetPixellateFilter.blurRadiusInPixels = 20;
-    
-    //[self.sourcePixellateFilter addTarget:self.blend];
-    //[self.targetPixellateFilter addTarget:self.blend];
-    [self.blurFilter addTarget:self.imageView];
+    [self.blurFilter addTarget:self.blend];
+    [self.originalImage addTarget:self.blend];
     
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateFrame:)];
     [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -94,7 +90,7 @@ static const float duration = 0.3;
     self.blurImage = [[GPUImagePicture alloc] initWithImage:fromView.objc_snapshot];
     [self.blurImage addTarget:self.blurFilter];
     
-    //self.targetImage = [[GPUImagePicture alloc] initWithImage:toView.objc_snapshot];
+    self.originalImage = [[GPUImagePicture alloc] initWithImage:fromView.objc_snapshot];
     //[self.targetImage addTarget:self.targetPixellateFilter];
     
     [self triggerRenderOfNextFrame];
@@ -119,7 +115,7 @@ static const float duration = 0.3;
 - (void)updateFrame:(CADisplayLink*)link
 {
     [self updateProgress:link];
-    //self.blend.mix = self.progress;
+    self.blend.mix = self.progress;
     self.blurFilter.blurRadiusInPixels = self.progress * self.progress * 10;
     [self triggerRenderOfNextFrame];
     
