@@ -24,8 +24,8 @@ static NSString * PushSegueIdentifier = @"push segue identifier";
 
 - (void)awakeFromNib
 {
-    UIPanGestureRecognizer* panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
-    [self.navigationController.view addGestureRecognizer:panRecognizer];
+//    UIPanGestureRecognizer* panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
+//    [self.navigationController.view addGestureRecognizer:panRecognizer];
     self.animator = [GPUImageAnimator new];
 }
 
@@ -56,6 +56,10 @@ static NSString * PushSegueIdentifier = @"push segue identifier";
 - (id<UIViewControllerAnimatedTransitioning>)navigationController:(UINavigationController *)navigationController animationControllerForOperation:(UINavigationControllerOperation)operation fromViewController:(UIViewController *)fromVC toViewController:(UIViewController *)toVC
 {
     if (operation == UINavigationControllerOperationPush) {
+        self.animator.type = UINavigationControllerOperationPush;
+        return self.animator;
+    }else if (operation == UINavigationControllerOperationPop){
+        self.animator.type = UINavigationControllerOperationPop;
         return self.animator;
     }
     return nil;
