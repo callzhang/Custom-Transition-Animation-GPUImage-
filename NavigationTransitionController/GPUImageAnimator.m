@@ -13,15 +13,13 @@
 #import "UIView+OBJSnapshot.h"
 #import "GPUImageView.h"
 
-static const float duration = 0.3;
+static const float duration = 2;
 
 @interface GPUImageAnimator ()
 
-@property (nonatomic, strong) GPUImageDissolveBlendFilter* blend;
 @property (nonatomic, strong) GPUImagePicture* blurImage;
 @property (nonatomic, strong) GPUImageiOSBlurFilter* blurFilter;
-@property (nonatomic, strong) GPUImagePicture* originalImage;
-//@property (nonatomic, strong) GPUImageiOSBlurFilter* targetPixellateFilter;
+@property (nonatomic, strong) GPUImageOpacityFilter* alphaFilter;
 @property (nonatomic, strong) GPUImageView* imageView;
 @property (nonatomic, strong) id <UIViewControllerContextTransitioning> context;
 @property (nonatomic) NSTimeInterval startTime;
@@ -46,22 +44,16 @@ static const float duration = 0.3;
     //self.imageView.alpha = 0;
     self.imageView.opaque = NO;
     
-//    self.blend = [[GPUImageDissolveBlendFilter alloc] init];
-//    self.blend.mix = 0;
-//    [self.blend addTarget:self.imageView];
-    
-    
     self.blurFilter = [[GPUImageiOSBlurFilter alloc] init];
-    self.blurFilter.blurRadiusInPixels = 0;
-    self.blurFilter.saturation = 1.2;
+    self.blurFilter.blurRadiusInPixels = 1;
+    self.blurFilter.saturation = 1;
     self.blurFilter.rangeReductionFactor = 0;
     
-    //self.targetPixellateFilter = [[GPUImageiOSBlurFilter alloc] init];
-    //self.targetPixellateFilter.blurRadiusInPixels = 20;
+    self.alphaFilter = [GPUImageOpacityFilter new];
+    self.alphaFilter.opacity = 1;
+    [self.blurFilter addTarget:self.alphaFilter];
+    [self.alphaFilter addTarget:self.imageView];
     
-    //[self.sourcePixellateFilter addTarget:self.blend];
-    //[self.targetPixellateFilter addTarget:self.blend];
-    [self.blurFilter addTarget:self.imageView];
     
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateFrame:)];
     [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -89,16 +81,12 @@ static const float duration = 0.3;
     
     self.imageView.frame = container.bounds;
     [container addSubview:self.imageView];
-    //[container sendSubviewToBack:self.imageView];
+    //[container sendSubviewToBack:self.imageView];//GPUImage need to be on top
     
     self.blurImage = [[GPUImagePicture alloc] initWithImage:fromView.objc_snapshot];
     [self.blurImage addTarget:self.blurFilter];
     
-    //self.targetImage = [[GPUImagePicture alloc] initWithImage:toView.objc_snapshot];
-    //[self.targetImage addTarget:self.targetPixellateFilter];
-    
     [self triggerRenderOfNextFrame];
-    
     
     self.imageView.alpha = 1;
     self.startTime = 0;
@@ -109,7 +97,6 @@ static const float duration = 0.3;
 - (void)triggerRenderOfNextFrame
 {
     [self.blurImage processImage];
-    //[self.targetImage processImage];
 }
 
 - (void)startInteractiveTransition:(id <UIViewControllerContextTransitioning>)transitionContext {
@@ -119,8 +106,8 @@ static const float duration = 0.3;
 - (void)updateFrame:(CADisplayLink*)link
 {
     [self updateProgress:link];
-    //self.blend.mix = self.progress;
-    self.blurFilter.blurRadiusInPixels = self.progress * self.progress * 10;
+    //self.alphaFilter.opacity = self.progress;
+    self.blurFilter.blurRadiusInPixels = self.progress * self.progress * 20;
     [self triggerRenderOfNextFrame];
     
     if (self.progress == 1 && !self.interactive) {
