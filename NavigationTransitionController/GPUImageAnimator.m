@@ -53,6 +53,8 @@ static const float duration = 0.3;
     
     self.sourceBlurFilter = [[GPUImageiOSBlurFilter alloc] init];
     self.sourceBlurFilter.blurRadiusInPixels = 0;
+    self.sourceBlurFilter.saturation = 1.2;
+    self.sourceBlurFilter.rangeReductionFactor = 0;
     
     //self.targetPixellateFilter = [[GPUImageiOSBlurFilter alloc] init];
     //self.targetPixellateFilter.blurRadiusInPixels = 20;
@@ -84,7 +86,7 @@ static const float duration = 0.3;
     UIView* container = [transitionContext containerView];
     [container addSubview:toView];
     toView.alpha = 0;
-    toView.transform = CGAffineTransformMakeScale(1.1, 1.1);
+    toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
     
     self.imageView.frame = container.bounds;
     [container addSubview:self.imageView];
@@ -119,7 +121,7 @@ static const float duration = 0.3;
 {
     [self updateProgress:link];
     //self.blend.mix = self.progress;
-    self.sourceBlurFilter.blurRadiusInPixels = self.progress * 10;
+    self.sourceBlurFilter.blurRadiusInPixels = self.progress * self.progress * 10;
     [self triggerRenderOfNextFrame];
     
     if (self.progress == 1 && !self.interactive) {
