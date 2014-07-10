@@ -17,10 +17,10 @@ static const float duration = 0.3;
 
 @interface GPUImageAnimator ()
 
-//@property (nonatomic, strong) GPUImageDissolveBlendFilter* blend;
-@property (nonatomic, strong) GPUImagePicture* sourceImage;
-@property (nonatomic, strong) GPUImageiOSBlurFilter* sourceBlurFilter;
-//@property (nonatomic, strong) GPUImagePicture* targetImage;
+@property (nonatomic, strong) GPUImageDissolveBlendFilter* blend;
+@property (nonatomic, strong) GPUImagePicture* blurImage;
+@property (nonatomic, strong) GPUImageiOSBlurFilter* blurFilter;
+@property (nonatomic, strong) GPUImagePicture* originalImage;
 //@property (nonatomic, strong) GPUImageiOSBlurFilter* targetPixellateFilter;
 @property (nonatomic, strong) GPUImageView* imageView;
 @property (nonatomic, strong) id <UIViewControllerContextTransitioning> context;
@@ -51,18 +51,17 @@ static const float duration = 0.3;
 //    [self.blend addTarget:self.imageView];
     
     
-    self.sourceBlurFilter = [[GPUImageiOSBlurFilter alloc] init];
-    self.sourceBlurFilter.blurRadiusInPixels = 0;
-    self.sourceBlurFilter.saturation = 1.2;
-    self.sourceBlurFilter.rangeReductionFactor = 0;
+    self.blurFilter = [[GPUImageiOSBlurFilter alloc] init];
+    self.blurFilter.blurRadiusInPixels = 0;
+    self.blurFilter.saturation = 1.2;
+    self.blurFilter.rangeReductionFactor = 0;
     
     //self.targetPixellateFilter = [[GPUImageiOSBlurFilter alloc] init];
     //self.targetPixellateFilter.blurRadiusInPixels = 20;
     
     //[self.sourcePixellateFilter addTarget:self.blend];
     //[self.targetPixellateFilter addTarget:self.blend];
-    [self.sourceBlurFilter addTarget:self.imageView];
-    
+    [self.blurFilter addTarget:self.imageView];
     
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateFrame:)];
     [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -92,8 +91,8 @@ static const float duration = 0.3;
     [container addSubview:self.imageView];
     //[container sendSubviewToBack:self.imageView];
     
-    self.sourceImage = [[GPUImagePicture alloc] initWithImage:fromView.objc_snapshot];
-    [self.sourceImage addTarget:self.sourceBlurFilter];
+    self.blurImage = [[GPUImagePicture alloc] initWithImage:fromView.objc_snapshot];
+    [self.blurImage addTarget:self.blurFilter];
     
     //self.targetImage = [[GPUImagePicture alloc] initWithImage:toView.objc_snapshot];
     //[self.targetImage addTarget:self.targetPixellateFilter];
@@ -109,7 +108,7 @@ static const float duration = 0.3;
 
 - (void)triggerRenderOfNextFrame
 {
-    [self.sourceImage processImage];
+    [self.blurImage processImage];
     //[self.targetImage processImage];
 }
 
@@ -121,7 +120,7 @@ static const float duration = 0.3;
 {
     [self updateProgress:link];
     //self.blend.mix = self.progress;
-    self.sourceBlurFilter.blurRadiusInPixels = self.progress * self.progress * 10;
+    self.blurFilter.blurRadiusInPixels = self.progress * self.progress * 10;
     [self triggerRenderOfNextFrame];
     
     if (self.progress == 1 && !self.interactive) {
