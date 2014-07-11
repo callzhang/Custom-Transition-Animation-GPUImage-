@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 #########################
 # .gitignore file for Xcode4 / OS X Source projects
 #
@@ -123,12 +123,5 @@ xcuserdata
  
 *.moved-aside
 =======
-
-*.xcuserstate
->>>>>>> FETCH_HEAD
-
-*.xcuserstate
-
-*.xcuserstate
 
 *.xcuserstate
