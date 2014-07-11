@@ -17,10 +17,11 @@ static const float duration = 0.4;
 
 @interface GPUImageAnimator ()
 
-@property (nonatomic, strong) GPUImagePicture* blurImage;
-@property (nonatomic, strong) GPUImageiOSBlurFilter* blurFilter;
+@property (nonatomic, strong) UIImage *sourceImage;
+@property (nonatomic, strong) CIContext *CIContext;
+@property (nonatomic, strong) CIFilter* blurFilter;
 //@property (nonatomic, strong) GPUImageOpacityFilter* alphaFilter;
-@property (nonatomic, strong) GPUImageView* imageView;
+@property (nonatomic, strong) UIImageView* imageView;
 @property (nonatomic, strong) id <UIViewControllerContextTransitioning> context;
 @property (nonatomic) NSTimeInterval startTime;
 @property (nonatomic, strong) CADisplayLink* displayLink;
@@ -40,23 +41,6 @@ static const float duration = 0.4;
 
 - (void)setup
 {
-    self.imageView = [[GPUImageView alloc] init];
-    //self.imageView.alpha = 0;
-    self.imageView.opaque = NO;
-    
-    self.blurFilter = [[GPUImageiOSBlurFilter alloc] init];
-    self.blurFilter.blurRadiusInPixels = 1;
-    self.blurFilter.saturation = 1;
-    self.blurFilter.rangeReductionFactor = 0;
-    self.blurFilter.downsampling = 0;
-    [self.blurFilter addTarget:self.imageView];
-    
-//    self.alphaFilter = [GPUImageOpacityFilter new];
-//    self.alphaFilter.opacity = 0;
-//    [self.blurFilter addTarget:self.alphaFilter];
-//    [self.alphaFilter addTarget:self.imageView];
-    
-    
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateFrame:)];
     [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
     self.displayLink.paused = YES;
@@ -74,23 +58,33 @@ static const float duration = 0.4;
     UIViewController* toViewController = [transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
     UIViewController* fromViewController = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
     UIView* container = [transitionContext containerView];
+    UIView *toView = toViewController.view;
+    UIView *fromView = fromViewController.view;
     
+    
+    self.imageView = [[UIImageView alloc] initWithFrame:toView.frame];
+    self.imageView.contentMode = UIViewContentModeScaleAspectFit;
     self.imageView.frame = container.bounds;
     self.imageView.alpha = 1;
     [container addSubview:self.imageView];
     
     if (self.type == UINavigationControllerOperationPush) {
         
-        self.blurImage = [[GPUImagePicture alloc] initWithImage:fromViewController.view.objc_snapshot];
-        [self.blurImage addTarget:self.blurFilter];
+        self.sourceImage = fromView.objc_snapshot;
         
-        [self triggerRenderOfNextFrame];
+        //create our blurred image
+        self.CIContext = [CIContext contextWithOptions:nil];
+        CIImage *inputImage = [CIImage imageWithCGImage:self.sourceImage.CGImage];
+        
+        //setting up Gaussian Blur (we could use one of many filters offered by Core Image)
+        self.blurFilter = [CIFilter filterWithName:@"CIGaussianBlur"];
+        [self.blurFilter setValue:inputImage forKey:kCIInputImageKey];
+        [self.blurFilter setValue:@1 forKey:@"inputRadius"];
         
         self.startTime = 0;
         self.displayLink.paused = NO;
         
         //animation
-        UIView *toView = [self.context viewControllerForKey:UITransitionContextToViewControllerKey].view;
         [[self.context containerView] addSubview:toView];
         toView.alpha = 0;
         toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
@@ -121,8 +115,9 @@ static const float duration = 0.4;
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             
-            self.blurImage = [[GPUImagePicture alloc] initWithImage:toViewController.view.objc_snapshot];
-            [self.blurImage addTarget:self.blurFilter];
+            self.sourceImage = toView.objc_snapshot;
+            
+            
             [self triggerRenderOfNextFrame];
             self.startTime = 0;
             self.displayLink.paused = NO;
@@ -134,7 +129,14 @@ static const float duration = 0.4;
 
 - (void)triggerRenderOfNextFrame
 {
-    [self.blurImage processImage];
+    //[self.blurImage processImage];
+    
+    
+    CIImage *result = [self.blurFilter valueForKey:kCIOutputImageKey];
+    //CIGaussianBlur has a tendency to shrink the image a little, this ensures it matches up exactly to the bounds of our original image
+    CGImageRef cgImage = [self.CIContext createCGImage:result fromRect:self.imageView.frame];
+    //add our blurred image to the scrollview
+    self.imageView.image = [UIImage imageWithCGImage:cgImage];
 }
 
 - (void)startInteractiveTransition:(id <UIViewControllerContextTransitioning>)transitionContext {
@@ -144,16 +146,17 @@ static const float duration = 0.4;
 - (void)updateFrame:(CADisplayLink*)link
 {
     [self updateProgress:link];
-    //self.alphaFilter.opacity = self.progress;
-    self.blurFilter.downsampling = 1 + self.progress * 5;
-    self.blurFilter.blurRadiusInPixels = 1+ self.progress * 8;
+    
+    [self.blurFilter setValue:[NSNumber numberWithFloat:1 + self.progress * 40] forKey:@"inputRadius"];
     [self triggerRenderOfNextFrame];
     
     if (self.interactive) {
         return;
     }
     if (self.type == UINavigationControllerOperationPush && self.progress == 1) {
-        [self finishTransition];
+        
+        self.displayLink.paused = YES;
+        
     }else if (self.type == UINavigationControllerOperationPop && self.progress == 0){
         
         self.displayLink.paused = YES;
