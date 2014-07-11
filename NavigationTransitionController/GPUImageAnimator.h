@@ -21,6 +21,7 @@ UIViewControllerInteractiveTransitioning>
 
 @property (nonatomic) BOOL interactive;
 @property (nonatomic) CGFloat progress;
+@property (nonatomic) NSInteger type;
 
 - (void)finishInteractiveTransition;
 - (void)cancelInteractiveTransition;

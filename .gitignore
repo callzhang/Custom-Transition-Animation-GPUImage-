@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #########################
 # .gitignore file for Xcode4 / OS X Source projects
 #
@@ -121,3 +122,9 @@ xcuserdata
 # We're using source-control, so this is a "feature" that we do not want!
  
 *.moved-aside
+=======
+
+*.xcuserstate
+>>>>>>> FETCH_HEAD
+
+*.xcuserstate

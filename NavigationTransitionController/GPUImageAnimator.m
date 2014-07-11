@@ -1,4 +1,4 @@
-//
+	//
 //  GPUImageAnimator.m
 //  NavigationTransitionTest
 //
@@ -17,11 +17,9 @@ static const float duration = 0.3;
 
 @interface GPUImageAnimator ()
 
-//@property (nonatomic, strong) GPUImageDissolveBlendFilter* blend;
-@property (nonatomic, strong) GPUImagePicture* sourceImage;
-@property (nonatomic, strong) GPUImageiOSBlurFilter* sourceBlurFilter;
-//@property (nonatomic, strong) GPUImagePicture* targetImage;
-//@property (nonatomic, strong) GPUImageiOSBlurFilter* targetPixellateFilter;
+@property (nonatomic, strong) GPUImagePicture* blurImage;
+@property (nonatomic, strong) GPUImageiOSBlurFilter* blurFilter;
+//@property (nonatomic, strong) GPUImageOpacityFilter* alphaFilter;
 @property (nonatomic, strong) GPUImageView* imageView;
 @property (nonatomic, strong) id <UIViewControllerContextTransitioning> context;
 @property (nonatomic) NSTimeInterval startTime;
@@ -46,22 +44,17 @@ static const float duration = 0.3;
     //self.imageView.alpha = 0;
     self.imageView.opaque = NO;
     
-//    self.blend = [[GPUImageDissolveBlendFilter alloc] init];
-//    self.blend.mix = 0;
-//    [self.blend addTarget:self.imageView];
+    self.blurFilter = [[GPUImageiOSBlurFilter alloc] init];
+    self.blurFilter.blurRadiusInPixels = 1;
+    self.blurFilter.saturation = 1;
+    self.blurFilter.rangeReductionFactor = 0;
+    self.blurFilter.downsampling = 1;
+    [self.blurFilter addTarget:self.imageView];
     
-    
-    self.sourceBlurFilter = [[GPUImageiOSBlurFilter alloc] init];
-    self.sourceBlurFilter.blurRadiusInPixels = 0;
-    self.sourceBlurFilter.saturation = 1.2;
-    self.sourceBlurFilter.rangeReductionFactor = 0;
-    
-    //self.targetPixellateFilter = [[GPUImageiOSBlurFilter alloc] init];
-    //self.targetPixellateFilter.blurRadiusInPixels = 20;
-    
-    //[self.sourcePixellateFilter addTarget:self.blend];
-    //[self.targetPixellateFilter addTarget:self.blend];
-    [self.sourceBlurFilter addTarget:self.imageView];
+//    self.alphaFilter = [GPUImageOpacityFilter new];
+//    self.alphaFilter.opacity = 0;
+//    [self.blurFilter addTarget:self.alphaFilter];
+//    [self.alphaFilter addTarget:self.imageView];
     
     
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateFrame:)];
@@ -80,37 +73,50 @@ static const float duration = 0.3;
     self.context = transitionContext;
     UIViewController* toViewController = [transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
     UIViewController* fromViewController = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
-    //toView
-    UIView* toView = toViewController.view;
-    UIView* fromView = fromViewController.view;
     UIView* container = [transitionContext containerView];
-    [container addSubview:toView];
-    toView.alpha = 0;
-    toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
     
     self.imageView.frame = container.bounds;
     [container addSubview:self.imageView];
-    //[container sendSubviewToBack:self.imageView];
     
-    self.sourceImage = [[GPUImagePicture alloc] initWithImage:fromView.objc_snapshot];
-    [self.sourceImage addTarget:self.sourceBlurFilter];
+    if (self.type == UINavigationControllerOperationPush) {
+        
+        self.blurImage = [[GPUImagePicture alloc] initWithImage:fromViewController.view.objc_snapshot];
+        [self.blurImage addTarget:self.blurFilter];
+        
+        [self triggerRenderOfNextFrame];
+        
+        self.imageView.alpha = 1;
+        self.startTime = 0;
+        self.displayLink.paused = NO;
+        
+    }else if(self.type == UINavigationControllerOperationPop){
+        
+        UIView *toView = toViewController.view;
+        [[self.context containerView] addSubview:toView];
+        [self.context.containerView bringSubviewToFront:toView];
+        
+        [UIView animateWithDuration:0.3 animations:^{
+            
+            toView.alpha = 0;
+            toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
+            
+        }completion:^(BOOL finished) {
+            [[self.context containerView] sendSubviewToBack:toView];
+            
+            self.startTime = 0;
+            self.displayLink.paused = NO;
+        }];
+
+        
+    }
     
-    //self.targetImage = [[GPUImagePicture alloc] initWithImage:toView.objc_snapshot];
-    //[self.targetImage addTarget:self.targetPixellateFilter];
     
-    [self triggerRenderOfNextFrame];
-    
-    
-    self.imageView.alpha = 1;
-    self.startTime = 0;
-    self.displayLink.paused = NO;
     
 }
 
 - (void)triggerRenderOfNextFrame
 {
-    [self.sourceImage processImage];
-    //[self.targetImage processImage];
+    [self.blurImage processImage];
 }
 
 - (void)startInteractiveTransition:(id <UIViewControllerContextTransitioning>)transitionContext {
@@ -120,12 +126,18 @@ static const float duration = 0.3;
 - (void)updateFrame:(CADisplayLink*)link
 {
     [self updateProgress:link];
-    //self.blend.mix = self.progress;
-    self.sourceBlurFilter.blurRadiusInPixels = self.progress * self.progress * 10;
+    //self.alphaFilter.opacity = self.progress;
+    self.blurFilter.downsampling = 1 + self.progress * 7;
+    self.blurFilter.blurRadiusInPixels = 1+ self.progress * 8;
     [self triggerRenderOfNextFrame];
     
-    if (self.progress == 1 && !self.interactive) {
+    if (self.interactive) {
+        return;
+    }
+    if (self.type == UINavigationControllerOperationPush && self.progress == 1) {
         [self finishInteractiveTransition];
+    }else if (self.type == UINavigationControllerOperationPop && self.progress == 0){
+        
     }
 }
 
@@ -137,7 +149,15 @@ static const float duration = 0.3;
     if (self.startTime == 0) {
         self.startTime = link.timestamp;
     }
-    self.progress = MAX(0, MIN((link.timestamp - self.startTime) / duration, 1));
+    
+    
+    float progress = MAX(0, MIN((link.timestamp - self.startTime) / duration, 1));
+    
+    if (self.type == UINavigationControllerOperationPush) {
+        self.progress = progress;
+    }else if (self.type == UINavigationControllerOperationPop){
+        self.progress = 1- progress;
+    }
 }
 
 - (void)setProgress:(CGFloat)progress
@@ -157,16 +177,23 @@ static const float duration = 0.3;
     
     
     //uiview
-    
-    UIView *toView = [self.context viewControllerForKey:UITransitionContextToViewControllerKey].view;
-    [self.context.containerView bringSubviewToFront:toView];
-    [UIView animateWithDuration:0.3 animations:^{
-        toView.alpha = 1;
-        toView.transform = CGAffineTransformIdentity;
-    }completion:^(BOOL finished) {
+    if (self.type == UINavigationControllerOperationPush) {
         
-        [self.context completeTransition:YES];
-    }];
+        UIView *toView = [self.context viewControllerForKey:UITransitionContextToViewControllerKey].view;
+        [[self.context containerView] addSubview:toView];
+        toView.alpha = 0;
+        toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
+        [self.context.containerView bringSubviewToFront:toView];
+        [UIView animateWithDuration:0.3 animations:^{
+            toView.alpha = 1;
+            toView.transform = CGAffineTransformIdentity;
+        }completion:^(BOOL finished) {
+            
+            [self.context completeTransition:YES];
+        }];
+        
+    }
+    
 }
 
 - (void)cancelInteractiveTransition
