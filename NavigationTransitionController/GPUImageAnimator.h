@@ -23,7 +23,7 @@ UIViewControllerInteractiveTransitioning>
 @property (nonatomic) CGFloat progress;
 @property (nonatomic) NSInteger type;
 
-- (void)finishInteractiveTransition;
+- (void)finishTransition;
 - (void)cancelInteractiveTransition;
 
 @end

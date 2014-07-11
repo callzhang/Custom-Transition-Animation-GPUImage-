@@ -13,7 +13,7 @@
 #import "UIView+OBJSnapshot.h"
 #import "GPUImageView.h"
 
-static const float duration = 0.3;
+static const float duration = 0.4;
 
 @interface GPUImageAnimator ()
 
@@ -76,6 +76,7 @@ static const float duration = 0.3;
     UIView* container = [transitionContext containerView];
     
     self.imageView.frame = container.bounds;
+    self.imageView.alpha = 1;
     [container addSubview:self.imageView];
     
     if (self.type == UINavigationControllerOperationPush) {
@@ -85,28 +86,47 @@ static const float duration = 0.3;
         
         [self triggerRenderOfNextFrame];
         
-        self.imageView.alpha = 1;
         self.startTime = 0;
         self.displayLink.paused = NO;
         
+        //animation
+        UIView *toView = [self.context viewControllerForKey:UITransitionContextToViewControllerKey].view;
+        [[self.context containerView] addSubview:toView];
+        toView.alpha = 0;
+        toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
+        [UIView animateWithDuration:0.3 delay:0.2 options:UIViewAnimationOptionTransitionNone animations:^{
+            toView.alpha = 1;
+            toView.transform = CGAffineTransformIdentity;
+        } completion:^(BOOL finished) {
+            [self.context completeTransition:YES];
+        }];
+        
     }else if(self.type == UINavigationControllerOperationPop){
         
-        UIView *toView = toViewController.view;
-        [[self.context containerView] addSubview:toView];
-        [self.context.containerView bringSubviewToFront:toView];
+        UIView *fromView = fromViewController.view;
+        [[self.context containerView] addSubview:fromView];
         
-        [UIView animateWithDuration:0.3 animations:^{
+        [UIView animateWithDuration:0.4 animations:^{
             
-            toView.alpha = 0;
-            toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
+            fromView.alpha = 0;
+            fromView.transform = CGAffineTransformMakeScale(1.3, 1.3);
             
         }completion:^(BOOL finished) {
-            [[self.context containerView] sendSubviewToBack:toView];
             
+            [fromView removeFromSuperview];
+            [container addSubview:toViewController.view];
+            [container sendSubviewToBack:toViewController.view];
+            
+        }];
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            
+            self.blurImage = [[GPUImagePicture alloc] initWithImage:toViewController.view.objc_snapshot];
+            [self.blurImage addTarget:self.blurFilter];
+            [self triggerRenderOfNextFrame];
             self.startTime = 0;
             self.displayLink.paused = NO;
-        }];
-
+        });
         
     }
     
@@ -135,9 +155,12 @@ static const float duration = 0.3;
         return;
     }
     if (self.type == UINavigationControllerOperationPush && self.progress == 1) {
-        [self finishInteractiveTransition];
+        [self finishTransition];
     }else if (self.type == UINavigationControllerOperationPop && self.progress == 0){
         
+        self.displayLink.paused = YES;
+        [self.context completeTransition:YES];
+        self.imageView.alpha = 0;
     }
 }
 
@@ -168,30 +191,11 @@ static const float duration = 0.3;
     }
 }
 
-- (void)finishInteractiveTransition
+- (void)finishTransition
 {
     self.displayLink.paused = YES;
     if (self.interactive) {
         [self.context finishInteractiveTransition];
-    }
-    
-    
-    //uiview
-    if (self.type == UINavigationControllerOperationPush) {
-        
-        UIView *toView = [self.context viewControllerForKey:UITransitionContextToViewControllerKey].view;
-        [[self.context containerView] addSubview:toView];
-        toView.alpha = 0;
-        toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
-        [self.context.containerView bringSubviewToFront:toView];
-        [UIView animateWithDuration:0.3 animations:^{
-            toView.alpha = 1;
-            toView.transform = CGAffineTransformIdentity;
-        }completion:^(BOOL finished) {
-            
-            [self.context completeTransition:YES];
-        }];
-        
     }
     
 }

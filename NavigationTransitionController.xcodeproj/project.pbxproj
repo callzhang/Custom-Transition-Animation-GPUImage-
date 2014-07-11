@@ -32,6 +32,7 @@
 		83C1B70A1805FB5A00A9DD41 /* NavigationControllerDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 83C1B7091805FB5A00A9DD41 /* NavigationControllerDelegate.m */; };
 		83C1B70D1805FD8600A9DD41 /* Animator.m in Sources */ = {isa = PBXBuildFile; fileRef = 83C1B70C1805FD8600A9DD41 /* Animator.m */; };
 		9BA65920196E3AFA00E4F601 /* Post Wake Up.png in Resources */ = {isa = PBXBuildFile; fileRef = 9BA6591F196E3AFA00E4F601 /* Post Wake Up.png */; };
+		9BA65925196F9AB400E4F601 /* Reveal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA65924196F9AB400E4F601 /* Reveal.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +101,7 @@
 		83C1B70B1805FD8600A9DD41 /* Animator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Animator.h; sourceTree = "<group>"; };
 		83C1B70C1805FD8600A9DD41 /* Animator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Animator.m; sourceTree = "<group>"; };
 		9BA6591F196E3AFA00E4F601 /* Post Wake Up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Post Wake Up.png"; sourceTree = "<group>"; };
+		9BA65924196F9AB400E4F601 /* Reveal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Reveal.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +116,7 @@
 				326C76FB18EC35B000FD10D8 /* CoreMedia.framework in Frameworks */,
 				326C76F918EC359200FD10D8 /* libGPUImage.a in Frameworks */,
 				83C1B6D61805FB3100A9DD41 /* CoreGraphics.framework in Frameworks */,
+				9BA65925196F9AB400E4F601 /* Reveal.framework in Frameworks */,
 				83C1B6D81805FB3100A9DD41 /* UIKit.framework in Frameworks */,
 				83C1B6D41805FB3100A9DD41 /* Foundation.framework in Frameworks */,
 			);
@@ -163,6 +166,7 @@
 		83C1B6D21805FB3100A9DD41 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9BA65924196F9AB400E4F601 /* Reveal.framework */,
 				326C770218EC35CC00FD10D8 /* QuartzCore.framework */,
 				326C770018EC35C500FD10D8 /* AVFoundation.framework */,
 				326C76FE18EC35BF00FD10D8 /* OpenGLES.framework */,
@@ -504,9 +508,14 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "NavigationTransitionController/NavigationTransitionController-Prefix.pch";
 				INFOPLIST_FILE = "NavigationTransitionController/NavigationTransitionController-Info.plist";
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
@@ -520,9 +529,14 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "NavigationTransitionController/NavigationTransitionController-Prefix.pch";
 				INFOPLIST_FILE = "NavigationTransitionController/NavigationTransitionController-Info.plist";
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
