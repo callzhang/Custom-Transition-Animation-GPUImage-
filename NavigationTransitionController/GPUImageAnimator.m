@@ -48,7 +48,7 @@ static const float duration = 0.4;
     self.blurFilter.blurRadiusInPixels = 1;
     self.blurFilter.saturation = 1;
     self.blurFilter.rangeReductionFactor = 0;
-    self.blurFilter.downsampling = 1;
+    self.blurFilter.downsampling = 0;
     [self.blurFilter addTarget:self.imageView];
     
 //    self.alphaFilter = [GPUImageOpacityFilter new];
@@ -94,7 +94,7 @@ static const float duration = 0.4;
         [[self.context containerView] addSubview:toView];
         toView.alpha = 0;
         toView.transform = CGAffineTransformMakeScale(1.3, 1.3);
-        [UIView animateWithDuration:0.3 delay:0.2 options:UIViewAnimationOptionTransitionNone animations:^{
+        [UIView animateWithDuration:0.3 delay:0.2 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             toView.alpha = 1;
             toView.transform = CGAffineTransformIdentity;
         } completion:^(BOOL finished) {
@@ -106,7 +106,7 @@ static const float duration = 0.4;
         UIView *fromView = fromViewController.view;
         [[self.context containerView] addSubview:fromView];
         
-        [UIView animateWithDuration:0.4 animations:^{
+        [UIView animateWithDuration:0.4 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             
             fromView.alpha = 0;
             fromView.transform = CGAffineTransformMakeScale(1.3, 1.3);
@@ -130,8 +130,6 @@ static const float duration = 0.4;
         
     }
     
-    
-    
 }
 
 - (void)triggerRenderOfNextFrame
@@ -147,7 +145,7 @@ static const float duration = 0.4;
 {
     [self updateProgress:link];
     //self.alphaFilter.opacity = self.progress;
-    self.blurFilter.downsampling = 1 + self.progress * 7;
+    self.blurFilter.downsampling = 1 + self.progress * 5;
     self.blurFilter.blurRadiusInPixels = 1+ self.progress * 8;
     [self triggerRenderOfNextFrame];
     
